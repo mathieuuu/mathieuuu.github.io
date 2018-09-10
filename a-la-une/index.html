@@ -27,8 +27,12 @@
   <style>
     body {background-color: black;}
     .wrapper {
-      display: table-cell; /* comportement visuel de cellule */
-      vertical-align: middle;
+      position: relative;
+    }
+    .owl-carousel {
+      position: absolute;
+      top: 50%; /* poussé de la moitié de hauteur du référent */
+      transform: translateY(-50%); /* tiré de la moitié de sa propre hauteur */
     }
   </style>
 </head>
