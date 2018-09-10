@@ -1,0 +1,26 @@
+{
+    "dir": "ltr",
+    "lang": "en",
+    "name": "A la Une",
+    "scope": "/",
+    "display": "standalone",
+    "start_url": "https://mathieuuub.bitbucket.io/",
+    "short_name": "A la Une",
+    "theme_color": "transparent",
+    "description": "",
+    "orientation": "any",
+    "background_color": "none",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+          "src": "alaune-192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        },
+        {
+          "src": "alaune-512.png",
+          "type": "image/png",
+          "sizes": "512x512"
+        }
+      ]
+}
