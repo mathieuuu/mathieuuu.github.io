@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="alaune-412.png" />
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css"/>
@@ -26,16 +26,20 @@
 
   <style>
     body {background-color: black;}
+    div.wrapper { display: table; width:100%;}
+    div.owl-carousel { display: table-cell; vertical-align: middle; }
   </style>
 </head>
 <body>
 
-  <div class="owl-carousel">
-    <div><img src="http://www.revue2presse.fr/newspaper/liberation/liberation-cover.jpg"/></div>
-    <div><img src="http://www.revue2presse.fr/newspaper/lemonde/lemonde-cover.jpg"/></div>
-    <div><img src="http://www.revue2presse.fr/newspaper/lefigaro/lefigaro-cover.jpg"/></div>
-    <div><img src="http://www.revue2presse.fr/newspaper/leparisien/leparisien-cover.jpg"/></div>
-    <div><img src="http://www.revue2presse.fr/newspaper/lequipe/lequipe-cover.jpg"/></div>
+  <div class="wrapper">
+    <div class="owl-carousel">
+      <div><img src="http://www.revue2presse.fr/newspaper/liberation/liberation-cover.jpg"/></div>
+      <div><img src="http://www.revue2presse.fr/newspaper/lemonde/lemonde-cover.jpg"/></div>
+      <div><img src="http://www.revue2presse.fr/newspaper/lefigaro/lefigaro-cover.jpg"/></div>
+      <div><img src="http://www.revue2presse.fr/newspaper/leparisien/leparisien-cover.jpg"/></div>
+      <div><img src="http://www.revue2presse.fr/newspaper/lequipe/lequipe-cover.jpg"/></div>
+    </div>
   </div>
 
 </body>
