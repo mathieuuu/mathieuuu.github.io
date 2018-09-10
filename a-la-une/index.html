@@ -27,12 +27,10 @@
   <style>
     body {background-color: black;}
     .wrapper {
-      position: relative;
+      display: flex; /* contexte sur le parent */
     }
     .owl-carousel {
-      position: absolute;
-      top: 50%; /* poussé de la moitié de hauteur du référent */
-      transform: translateY(-50%); /* tiré de la moitié de sa propre hauteur */
+      margin: auto; /* eh oui, tout bêtement */
     }
   </style>
 </head>
