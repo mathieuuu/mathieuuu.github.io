@@ -18,13 +18,13 @@
     function getDateString() {
         var date = new Date();
         
-        var year = date.getFullYear();
+        var year = date.getFullYear().toString();
         var monthInt = date.getMonth() + 1;
         var dayInt = date.getDate();
         var month = (monthInt < 10) ? ("0"+monthInt) : monthInt.toString();
         var day = (dayInt < 10) ? ("0"+dayInt) : dayInt.toString();
 
-        return year.toString() + "/" + month + "/" + day;
+        return year + "/" + month + "/" + day;
     }
 
     $(document).ready(function(){
