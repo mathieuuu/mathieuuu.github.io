@@ -15,7 +15,31 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script>
+    function getDateString() {
+        var date = new Date();
+        
+        var year = date.getFullYear().toString();
+        var monthInt = date.getMonth() + 1;
+        var dayInt = date.getDate();
+        var month = (monthInt < 10) ? ("0"+monthInt) : monthInt.toString();
+        var day = (dayInt < 10) ? ("0"+dayInt) : dayInt.toString();
+
+        return year + "/" + month + "/" + day;
+    }
+
     $(document).ready(function(){
+      var papers = ["liberation", "lefigaro", "l_equip"];
+      var dateString = getDateString();
+
+      for (var i= 0; i < papers.length; i++) {
+        var p = papers[i];
+        var url = "http://img.kiosko.net/" + dateString + "/fr/" + p + ".750.jpg";
+        
+        console.log(url);
+
+        $("#"+p).attr("src", url);
+      }
+
       $(".owl-carousel").owlCarousel({
         items:1,
         loop:true,
@@ -35,11 +59,11 @@
 
   <div class="wrapper">
     <div class="owl-carousel">
-      <div><img src="http://www.revue2presse.fr/newspaper/liberation/liberation-cover.jpg"/></div>
-      <div><img src="http://www.revue2presse.fr/newspaper/lemonde/lemonde-cover.jpg"/></div>
-      <div><img src="http://www.revue2presse.fr/newspaper/lefigaro/lefigaro-cover.jpg"/></div>
-      <div><img src="http://www.revue2presse.fr/newspaper/leparisien/leparisien-cover.jpg"/></div>
-      <div><img src="http://www.revue2presse.fr/newspaper/lequipe/lequipe-cover.jpg"/></div>
+      <div><img id="liberation" src="http://www.revue2presse.fr/newspaper/liberation/liberation-cover.jpg"/></div>
+      <!--<div><img id="lemonde" src="http://www.revue2presse.fr/newspaper/lemonde/lemonde-cover.jpg"/></div> -->
+      <div><img id="lefigaro" src="http://www.revue2presse.fr/newspaper/lefigaro/lefigaro-cover.jpg"/></div>
+      <!-- <div><img id="parisien" src="http://www.revue2presse.fr/newspaper/leparisien/leparisien-cover.jpg"/></div> -->
+      <div><img id="l_equip" src="http://www.revue2presse.fr/newspaper/lequipe/lequipe-cover.jpg"/></div>
     </div>
   </div>
 
