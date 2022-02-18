@@ -16,24 +16,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script>
     function getDateString() {
-        const date = new Date();
+        var date = new Date();
         
-        const year = date.getFullYear().toString();
-        const monthInt = date.getMonth() + 1;
-        const dayInt = date.getDate();
-        const month = (monthInt < 10) ? ("0"+monthInt) : monthInt.toString();
-        const day = (dayInt < 10) ? ("0"+dayInt) : dayInt.toString();
+        var year = date.getFullYear().toString();
+        var monthInt = date.getMonth() + 1;
+        var dayInt = date.getDate();
+        var month = (monthInt < 10) ? ("0"+monthInt) : monthInt.toString();
+        var day = (dayInt < 10) ? ("0"+dayInt) : dayInt.toString();
 
-        return year + "-" + month + "-" + day;
+        return year + "/" + month + "/" + day;
     }
 
     $(document).ready(function(){
-      const papers = ["le-quotidien", "le-parisien", "liberation", "le-monde", "les-echos"];
-      const dateString = getDateString();
+      var papers = ["liberation", "lefigaro", "l_equip", "parisien"];
+      var dateString = getDateString();
 
       for (var i= 0; i < papers.length; i++) {
-        const p = papers[i];
-        const url = "https://static.milibris.com/resource/sources/" + p + "/" + dateString + "/icon/icon.jpg?profile=large";
+        var p = papers[i];
+        var url = "http://img.kiosko.net/" + dateString + "/fr/" + p + ".750.jpg";
         
         console.log(url);
 
