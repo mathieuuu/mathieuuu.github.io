@@ -30,28 +30,66 @@
     $(document).ready(function(){
       var papers = [ "l_equip", "parisien", "liberation", "lefigaro", "lemonde", "echos"];
       var dateString = getDateString();
+      var $carousel = $(".owl-carousel");
+      var total = papers.length;
+      var count = 0;
+      var validImages = [];
 
-      for (var i= 0; i < papers.length; i++) {
-        var p = papers[i];
+      // Clear carousel initially to avoid showing old/fallback images while testing
+      $carousel.empty();
+
+      function checkImage(p, index) {
         var url = "http://img.kiosko.net/" + dateString + "/fr/" + p + ".750.jpg";
-        
-        console.log(url);
-
-        $("#"+p).attr("src", url);
+        var img = new Image();
+        img.onload = function() {
+          validImages[index] = url;
+          next();
+        };
+        img.onerror = function() {
+          console.log("Failed to load: " + url);
+          validImages[index] = null;
+          next();
+        };
+        img.src = url;
       }
 
-      $(".owl-carousel").owlCarousel({
-        items:1,
-        loop:true,
-        dots:true
-      });
+      function next() {
+        count++;
+        if (count === total) {
+          for (var i = 0; i < total; i++) {
+            if (validImages[i]) {
+              $carousel.append('<div><img src="' + validImages[i] + '"/></div>');
+            }
+          }
+
+          if ($carousel.children().length > 0) {
+            $carousel.owlCarousel({
+              items:1,
+              loop:true,
+              dots:true
+            });
+          }
+        }
+      }
+
+      for (var i = 0; i < total; i++) {
+        checkImage(papers[i], i);
+      }
     });
   </script> 
 
   <style>
-    body {background-color: black;}
+    body {
+      background-color: black;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
     .wrapper {
-      margin-top: 9vh; 
+      width: 100%;
     }
   </style>
 </head>
