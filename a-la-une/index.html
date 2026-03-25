@@ -67,7 +67,9 @@
             $carousel.owlCarousel({
               items:1,
               loop:true,
-              dots:true
+              dots:true,
+              touchDrag:false,
+              pullDrag:false
             });
           }
         }
@@ -91,6 +93,13 @@
     }
     .wrapper {
       width: 100%;
+    }
+    .owl-carousel,
+    .owl-carousel .owl-stage-outer,
+    .owl-carousel .owl-stage,
+    .owl-carousel .owl-item,
+    .owl-carousel .owl-item img {
+      touch-action: pinch-zoom !important;
     }
   </style>
 </head>
