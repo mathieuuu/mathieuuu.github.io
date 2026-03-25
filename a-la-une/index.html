@@ -54,6 +54,200 @@
         img.src = url;
       }
 
+      function resetZoom() {
+        $carousel.removeClass("is-zoomed");
+        $carousel.find("img[data-zoomed='true']").attr({
+          "data-zoomed": "false",
+          "data-tx": "0",
+          "data-ty": "0",
+          "data-tx-live": "0",
+          "data-ty-live": "0"
+        }).css({
+          "transform-origin": "center center",
+          "transform": ""
+        });
+        $carousel.find("img.zoomed").removeClass("zoomed");
+
+        var owl = $carousel.data('owl.carousel');
+        if (owl && owl.settings) {
+          owl.settings.touchDrag = true;
+          owl.settings.mouseDrag = true;
+          owl.settings.pullDrag = true;
+        }
+      }
+
+      function toggleImageZoom(img, clientX, clientY) {
+        var $img = $(img);
+        var isZoomed = $img.attr("data-zoomed") === "true";
+
+        if (isZoomed) {
+          resetZoom();
+          return;
+        }
+
+        resetZoom();
+        $carousel.addClass("is-zoomed");
+
+        var rect = img.getBoundingClientRect();
+        // Calculate the exact scale needed so that the image fits the screen completely (img full screen)
+        var scaleH = window.innerHeight / rect.height;
+        var scaleW = window.innerWidth / rect.width;
+        var scale = Math.max(scaleH, scaleW);
+
+        // Fallback in case the image perfectly fits the screen or is larger
+        if (Math.abs(scale - 1) < 0.1) {
+          scale = 2; // Default zoom if already "full screen"
+        }
+
+        if (clientX !== null && clientY !== null) {
+          var x = ((clientX - rect.left) / rect.width) * 100;
+          var y = ((clientY - rect.top) / rect.height) * 100;
+          img.style.transformOrigin = x + "% " + y + "%";
+        } else {
+          img.style.transformOrigin = "center center";
+        }
+
+        img.style.transform = "scale(" + scale + ")";
+        $img.attr("data-zoomed", "true");
+        $img.addClass("zoomed"); // To maintain any other CSS states, though transform is inline now
+
+        var owl = $carousel.data('owl.carousel');
+        if (owl && owl.settings) {
+          owl.settings.touchDrag = false;
+          owl.settings.mouseDrag = false;
+          owl.settings.pullDrag = false;
+        }
+      }
+
+      function enableTapZoom() {
+        var lastTapTime = 0;
+        var lastTapX = 0;
+        var lastTapY = 0;
+        var doubleTapDelay = 320;
+        var maxTapMove = 12;
+        var maxDoubleTapDistance = 40;
+        
+        var touchStartX = 0;
+        var touchStartY = 0;
+        var touchMoved = false;
+        var multiTouch = false;
+
+        var isPanning = false;
+        var panStartX = 0;
+        var panStartY = 0;
+        var currentTx = 0;
+        var currentTy = 0;
+
+        var imgs = $carousel.find(".owl-item img");
+
+        imgs.on("touchstart", function(e) {
+          var oe = e.originalEvent;
+          var $img = $(this);
+          
+          var isNativeZoom = window.visualViewport && window.visualViewport.scale > 1.01;
+
+          if (($carousel.hasClass("is-zoomed") && $img.attr("data-zoomed") === "true") || isNativeZoom) {
+            e.stopPropagation();
+            if (!isNativeZoom && oe.touches && oe.touches.length === 1) {
+              isPanning = true;
+              panStartX = oe.touches[0].clientX;
+              panStartY = oe.touches[0].clientY;
+              currentTx = parseFloat($img.attr("data-tx") || 0);
+              currentTy = parseFloat($img.attr("data-ty") || 0);
+            }
+          }
+
+          if (!oe.touches || oe.touches.length !== 1) {
+            multiTouch = true;
+            return;
+          }
+          multiTouch = false;
+          touchMoved = false;
+          touchStartX = oe.touches[0].clientX;
+          touchStartY = oe.touches[0].clientY;
+        });
+
+        imgs.on("touchmove", function(e) {
+          var oe = e.originalEvent;
+          var $img = $(this);
+          var isNativeZoom = window.visualViewport && window.visualViewport.scale > 1.01;
+
+          if (($carousel.hasClass("is-zoomed") && $img.attr("data-zoomed") === "true") || isNativeZoom) {
+            e.stopPropagation();
+            if (!isNativeZoom && isPanning && oe.touches.length === 1) {
+              var dxPan = oe.touches[0].clientX - panStartX;
+              var dyPan = oe.touches[0].clientY - panStartY;
+              var newTx = currentTx + dxPan;
+              var newTy = currentTy + dyPan;
+              
+              var scale = parseFloat($img.attr("data-scale") || 2);
+              $img.css("transform", "scale(" + scale + ") translate(" + (newTx/scale) + "px, " + (newTy/scale) + "px)");
+              $img.attr("data-tx-live", newTx);
+              $img.attr("data-ty-live", newTy);
+            }
+          }
+
+          if (!oe.touches || oe.touches.length !== 1 || multiTouch) {
+            touchMoved = true;
+            return;
+          }
+
+          var dx = Math.abs(oe.touches[0].clientX - touchStartX);
+          var dy = Math.abs(oe.touches[0].clientY - touchStartY);
+          if (dx > maxTapMove || dy > maxTapMove) {
+            touchMoved = true;
+          }
+        });
+
+        imgs.on("touchend", function(e) {
+          var oe = e.originalEvent;
+          var $img = $(this);
+          var isNativeZoom = window.visualViewport && window.visualViewport.scale > 1.01;
+          
+          if (($carousel.hasClass("is-zoomed") && $img.attr("data-zoomed") === "true") || isNativeZoom) {
+            e.stopPropagation();
+            if (!isNativeZoom && isPanning) {
+              $img.attr("data-tx", $img.attr("data-tx-live") || currentTx);
+              $img.attr("data-ty", $img.attr("data-ty-live") || currentTy);
+              isPanning = false;
+            }
+          }
+
+          var touch = oe.changedTouches && oe.changedTouches[0];
+          if (!touch || multiTouch || touchMoved) {
+            return;
+          }
+
+          var now = new Date().getTime();
+          var delta = now - lastTapTime;
+          var dxTap = Math.abs(touch.clientX - lastTapX);
+          var dyTap = Math.abs(touch.clientY - lastTapY);
+
+          if (!isNativeZoom) {
+            if (delta > 0 && delta < doubleTapDelay && dxTap < maxDoubleTapDistance && dyTap < maxDoubleTapDistance) {
+              toggleImageZoom(this, touch.clientX, touch.clientY);
+              e.preventDefault();
+            }
+          }
+
+          lastTapTime = now;
+          lastTapX = touch.clientX;
+          lastTapY = touch.clientY;
+        });
+
+        imgs.on("dblclick", function(e) {
+          toggleImageZoom(this, e.clientX, e.clientY);
+          if ($carousel.hasClass("is-zoomed")) {
+            e.stopPropagation();
+          }
+          e.preventDefault();
+        });
+
+        $carousel.on("changed.owl.carousel", function() {
+          resetZoom();
+        });
+      }
+
       function next() {
         count++;
         if (count === total) {
@@ -68,9 +262,10 @@
               items:1,
               loop:true,
               dots:true,
-              touchDrag:false,
-              pullDrag:false
+              touchDrag:true,
+              pullDrag:true
             });
+            enableTapZoom();
           }
         }
       }
@@ -101,18 +296,35 @@
     .owl-carousel .owl-item img {
       touch-action: pinch-zoom !important;
     }
+    .owl-carousel .owl-item {
+      overflow: hidden;
+    }
+    .owl-carousel.is-zoomed .owl-stage-outer,
+    .owl-carousel.is-zoomed .owl-item {
+      overflow: visible !important;
+    }
+    .owl-carousel .owl-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transform-origin: center center;
+      transition: transform 0.2s ease;
+    }
+    .owl-carousel .owl-item img.zoomed {
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
 
   <div class="wrapper">
     <div class="owl-carousel">
-      <div><img id="l_equip" src="http://www.revue2presse.fr/newspaper/lequipe/lequipe-cover.jpg"/></div>
-      <div><img id="parisien" src="http://www.revue2presse.fr/newspaper/leparisien/leparisien-cover.jpg"/></div>
-      <div><img id="liberation" src="http://www.revue2presse.fr/newspaper/liberation/liberation-cover.jpg"/></div>
-      <div><img id="lemonde" src="http://www.revue2presse.fr/newspaper/lemonde/lemonde-cover.jpg"/></div>
-      <div><img id="lefigaro" src="http://www.revue2presse.fr/newspaper/lefigaro/lefigaro-cover.jpg"/></div>
-      <div><img id="echos" src="http://www.revue2presse.fr/newspaper/lefigaro/echos-cover.jpg"/></div>
+      <div><img id="l_equip" src=""/></div>
+      <div><img id="parisien" src=""/></div>
+      <div><img id="liberation" src=""/></div>
+      <div><img id="lemonde" src=""/></div>
+      <div><img id="lefigaro" src=""/></div>
+      <div><img id="echos" src=""/></div>
     </div>
   </div>
 
