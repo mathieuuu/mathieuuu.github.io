@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>A la Une - FrontPages</title>
+  <title>A la Une</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="alaune-412.png" />
@@ -16,131 +16,42 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   <script>
+    function getDateString() {
+        var date = new Date();
+        
+        var year = date.getFullYear().toString();
+        var monthInt = date.getMonth() + 1;
+        var dayInt = date.getDate();
+        var month = (monthInt < 10) ? ("0"+monthInt) : monthInt.toString();
+        var day = (dayInt < 10) ? ("0"+dayInt) : dayInt.toString();
+
+        return year + "/" + month + "/" + day;
+    }
+
     $(document).ready(function(){
-      var papers = ["l-equipe", "le-parisien", "liberation", "le-figaro", "le-monde", "les-echos"];
+      var papers = [ "l_equip", "parisien", "liberation", "lefigaro", "lemonde", "echos"];
+      var dateString = getDateString();
       var $carousel = $(".owl-carousel");
       var total = papers.length;
       var count = 0;
       var validImages = [];
 
+      // Clear carousel initially to avoid showing old/fallback images while testing
       $carousel.empty();
 
-      function next() {
-        count++;
-        if (count === total) {
-          for (var i = 0; i < total; i++) {
-            if (validImages[i]) {
-              $carousel.append('<div><img src="' + validImages[i] + '"/></div>');
-            }
-          }
-
-          if ($carousel.children().length > 0) {
-            $carousel.owlCarousel({
-              items:1,
-              loop:true,
-              dots:true,
-              touchDrag:true,
-              pullDrag:true
-            });
-            enableTapZoom();
-          }
-        }
-      }
-
-      function markFailed(index, reason) {
-        if (reason) {
-          console.log(reason);
-        }
-        validImages[index] = null;
-        next();
-      }
-
-      function testImageUrl(url, index) {
+      function checkImage(p, index) {
+        var url = "http://img.kiosko.net/" + dateString + "/fr/" + p + ".750.jpg";
         var img = new Image();
         img.onload = function() {
           validImages[index] = url;
           next();
         };
         img.onerror = function() {
-          markFailed(index, "Image invalide: " + url);
+          console.log("Failed to load: " + url);
+          validImages[index] = null;
+          next();
         };
         img.src = url;
-      }
-
-      function decodeAtobPath(encoded) {
-        try {
-          var path = atob(encoded);
-          if (!path) {
-            return null;
-          }
-          if (path.indexOf("http://") === 0 || path.indexOf("https://") === 0) {
-            return path;
-          }
-          if (path.charAt(0) === "/") {
-            return "https://www.frontpages.com" + path;
-          }
-          return "https://www.frontpages.com/" + path;
-        } catch (e) {
-          return null;
-        }
-      }
-
-      function extractFrontPagesImageUrl(html) {
-        var atobMatch = html.match(/atob\(['\"]([^'\"]+)['\"]\)/);
-        if (atobMatch && atobMatch[1]) {
-          var decoded = decodeAtobPath(atobMatch[1]);
-          if (decoded) {
-            return decoded;
-          }
-        }
-
-        var ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-        if (ogMatch && ogMatch[1]) {
-          return ogMatch[1].trim();
-        }
-
-        return null;
-      }
-
-      function resolveFrontPageImage(slug, index) {
-        var pageUrl = "https://www.frontpages.com/" + slug + "/";
-        var proxyUrls = [
-          "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(pageUrl),
-          "https://api.allorigins.win/raw?url=" + encodeURIComponent(pageUrl),
-          "https://r.jina.ai/http://www.frontpages.com/" + slug + "/"
-        ];
-
-        function tryProxy(proxyIndex) {
-          if (proxyIndex >= proxyUrls.length) {
-            markFailed(index, "Impossible de recuperer la page FrontPages: " + pageUrl);
-            return;
-          }
-
-          $.ajax({
-            url: proxyUrls[proxyIndex],
-            type: "GET",
-            dataType: "text",
-            timeout: 20000
-          }).done(function(data) {
-            var imageUrl = extractFrontPagesImageUrl(data);
-            if (!imageUrl) {
-              tryProxy(proxyIndex + 1);
-              return;
-            }
-            testImageUrl(imageUrl, index);
-          }).fail(function(xhr) {
-            if (xhr && xhr.responseText) {
-              var imageUrlFromFail = extractFrontPagesImageUrl(xhr.responseText);
-              if (imageUrlFromFail) {
-                testImageUrl(imageUrlFromFail, index);
-                return;
-              }
-            }
-            tryProxy(proxyIndex + 1);
-          });
-        }
-
-        tryProxy(0);
       }
 
       function resetZoom() {
@@ -178,12 +89,14 @@
         $carousel.addClass("is-zoomed");
 
         var rect = img.getBoundingClientRect();
+        // Calculate the exact scale needed so that the image fits the screen completely (img full screen)
         var scaleH = window.innerHeight / rect.height;
         var scaleW = window.innerWidth / rect.width;
         var scale = Math.max(scaleH, scaleW);
 
+        // Fallback in case the image perfectly fits the screen or is larger
         if (Math.abs(scale - 1) < 0.1) {
-          scale = 2;
+          scale = 2; // Default zoom if already "full screen"
         }
 
         if (clientX !== null && clientY !== null) {
@@ -196,7 +109,7 @@
 
         img.style.transform = "scale(" + scale + ")";
         $img.attr("data-zoomed", "true");
-        $img.addClass("zoomed");
+        $img.addClass("zoomed"); // To maintain any other CSS states, though transform is inline now
 
         var owl = $carousel.data('owl.carousel');
         if (owl && owl.settings) {
@@ -213,7 +126,7 @@
         var doubleTapDelay = 320;
         var maxTapMove = 12;
         var maxDoubleTapDistance = 40;
-
+        
         var touchStartX = 0;
         var touchStartY = 0;
         var touchMoved = false;
@@ -230,7 +143,7 @@
         imgs.on("touchstart", function(e) {
           var oe = e.originalEvent;
           var $img = $(this);
-
+          
           var isNativeZoom = window.visualViewport && window.visualViewport.scale > 1.01;
 
           if (($carousel.hasClass("is-zoomed") && $img.attr("data-zoomed") === "true") || isNativeZoom) {
@@ -266,7 +179,7 @@
               var dyPan = oe.touches[0].clientY - panStartY;
               var newTx = currentTx + dxPan;
               var newTy = currentTy + dyPan;
-
+              
               var scale = parseFloat($img.attr("data-scale") || 2);
               $img.css("transform", "scale(" + scale + ") translate(" + (newTx/scale) + "px, " + (newTy/scale) + "px)");
               $img.attr("data-tx-live", newTx);
@@ -290,7 +203,7 @@
           var oe = e.originalEvent;
           var $img = $(this);
           var isNativeZoom = window.visualViewport && window.visualViewport.scale > 1.01;
-
+          
           if (($carousel.hasClass("is-zoomed") && $img.attr("data-zoomed") === "true") || isNativeZoom) {
             e.stopPropagation();
             if (!isNativeZoom && isPanning) {
@@ -335,11 +248,33 @@
         });
       }
 
+      function next() {
+        count++;
+        if (count === total) {
+          for (var i = 0; i < total; i++) {
+            if (validImages[i]) {
+              $carousel.append('<div><img src="' + validImages[i] + '"/></div>');
+            }
+          }
+
+          if ($carousel.children().length > 0) {
+            $carousel.owlCarousel({
+              items:1,
+              loop:true,
+              dots:true,
+              touchDrag:true,
+              pullDrag:true
+            });
+            enableTapZoom();
+          }
+        }
+      }
+
       for (var i = 0; i < total; i++) {
-        resolveFrontPageImage(papers[i], i);
+        checkImage(papers[i], i);
       }
     });
-  </script>
+  </script> 
 
   <style>
     body {
@@ -384,12 +319,12 @@
 
   <div class="wrapper">
     <div class="owl-carousel">
-      <div><img src=""/></div>
-      <div><img src=""/></div>
-      <div><img src=""/></div>
-      <div><img src=""/></div>
-      <div><img src=""/></div>
-      <div><img src=""/></div>
+      <div><img id="l_equip" src=""/></div>
+      <div><img id="parisien" src=""/></div>
+      <div><img id="liberation" src=""/></div>
+      <div><img id="lemonde" src=""/></div>
+      <div><img id="lefigaro" src=""/></div>
+      <div><img id="echos" src=""/></div>
     </div>
   </div>
 
