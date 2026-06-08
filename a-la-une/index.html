@@ -7,6 +7,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="alaune-412.png" />
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
@@ -102,45 +103,46 @@
         return null;
       }
 
+      function extractImageFromMarkdown(markdown) {
+        // Jina returns markdown: look for the main newspaper cover image
+        // Pattern: ![Cover ...](https://www.frontpages.com/g/...)
+        var coverMatch = markdown.match(/!\[[^\]]*\]\((https:\/\/www\.frontpages\.com\/g\/[^)]+)\)/);
+        if (coverMatch && coverMatch[1]) {
+          return coverMatch[1].trim();
+        }
+        // Fallback: any frontpages image in /g/ path
+        var gMatch = markdown.match(/https:\/\/www\.frontpages\.com\/g\/[^\s)"']+/);
+        if (gMatch) {
+          return gMatch[0].trim();
+        }
+        return null;
+      }
+
       function resolveFrontPageImage(slug, index) {
         var pageUrl = "https://www.frontpages.com/" + slug + "/";
-        var proxyUrls = [
-          "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(pageUrl),
-          "https://api.allorigins.win/raw?url=" + encodeURIComponent(pageUrl),
-          "https://r.jina.ai/http://www.frontpages.com/" + slug + "/"
-        ];
+        // Jina Reader supports CORS natively - use markdown format for easy image extraction
+        var jinaUrl = "https://r.jina.ai/" + pageUrl;
 
-        function tryProxy(proxyIndex) {
-          if (proxyIndex >= proxyUrls.length) {
-            markFailed(index, "Impossible de recuperer la page FrontPages: " + pageUrl);
-            return;
+        $.ajax({
+          url: jinaUrl,
+          type: "GET",
+          dataType: "text",
+          timeout: 25000
+        }).done(function(data) {
+          // Try markdown image extraction first
+          var imageUrl = extractImageFromMarkdown(data);
+          if (!imageUrl) {
+            // Fallback: try HTML og:image extraction
+            imageUrl = extractFrontPagesImageUrl(data);
           }
-
-          $.ajax({
-            url: proxyUrls[proxyIndex],
-            type: "GET",
-            dataType: "text",
-            timeout: 20000
-          }).done(function(data) {
-            var imageUrl = extractFrontPagesImageUrl(data);
-            if (!imageUrl) {
-              tryProxy(proxyIndex + 1);
-              return;
-            }
+          if (imageUrl) {
             testImageUrl(imageUrl, index);
-          }).fail(function(xhr) {
-            if (xhr && xhr.responseText) {
-              var imageUrlFromFail = extractFrontPagesImageUrl(xhr.responseText);
-              if (imageUrlFromFail) {
-                testImageUrl(imageUrlFromFail, index);
-                return;
-              }
-            }
-            tryProxy(proxyIndex + 1);
-          });
-        }
-
-        tryProxy(0);
+          } else {
+            markFailed(index, "Impossible d'extraire l'image pour: " + pageUrl);
+          }
+        }).fail(function() {
+          markFailed(index, "Impossible de recuperer la page FrontPages: " + pageUrl);
+        });
       }
 
       function resetZoom() {
